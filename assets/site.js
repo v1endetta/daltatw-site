@@ -211,7 +211,7 @@
   var svg = $('[data-svg]');
   var stops = svg ? $$('stop', svg) : [];
   var segEls = $$('[data-seg]').sort(function (a, b) { return +a.getAttribute('data-seg') - +b.getAttribute('data-seg'); });
-  var segs = null, totalL = 0, ymax = null, ylen = null, STEP = 6, bounds = {}, rootTopDoc = 0, tipPlaced = false;
+  var segs = null, totalL = 0, ymax = null, ylen = null, STEP = 10, lastKey = '', bounds = {}, rootTopDoc = 0, tipPlaced = false;
   var film = $('[data-film]'), filmV = film ? $('video', film) : null, filmPlayBtn = film ? $('.d-film-play', film) : null;
   var filmSeg = -1, filmEnd = -1, filmLineHidden = false;
   var fs = { vis: false, played: false }, rt2 = 0;
@@ -252,6 +252,11 @@
     });
     ds.push('M ' + g + ' ' + prevY + ' L ' + g + ' ' + yEnd);
     var w = Math.round(rr.width), h = Math.round(root.scrollHeight || rr.height);
+    // 版面沒變就不重算整條線（重算很吃手機效能）
+    var key = w + 'x' + h + '|' + ds.join('|');
+    rootTopDoc = rr.top + (window.scrollY || 0);
+    if (key === lastKey && segs) { updateTarget(); return; }
+    lastKey = key;
     svg.setAttribute('width', w); svg.setAttribute('height', h); svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
     var grad = $('#dInk'); if (grad) grad.setAttribute('y2', h);
     var s1 = (heroR.bottom / h).toFixed(5), s2 = (talkR.top / h).toFixed(5);
@@ -392,10 +397,17 @@
 
   /* ---------- 全螢幕看完整作品 ---------- */
   var lb = $('.d-lb'), lbVideo = lb ? $('video', lb) : null, lbImg = lb ? $('[data-lbi]', lb) : null;
+  // 手機和小螢幕放 720p 版（檔案約一半），行動網路才不會一直轉圈；大螢幕維持 1080p
+  var small = touch || (window.matchMedia && window.matchMedia('(max-width: 900px)').matches);
   var LB_SRC = {
     1: function () { return 'assets/brand-film.mp4?v=20261009b'; },
-    2: function () { return state.lang === 'en' ? 'assets/ere-original-en.mp4?v=20261009f' : 'assets/ere-original-zh.mp4?v=20261009f'; },
-    3: function () { return 'assets/yunjiao-reel.mp4'; }
+    2: function () { return 'assets/ere-original-' + (state.lang === 'en' ? 'en' : 'zh') + (small ? '-720' : '') + '.mp4?v=20261009g'; },
+    3: function () { return small ? 'assets/yunjiao-reel-720.mp4?v=20261009g' : 'assets/yunjiao-reel.mp4'; }
+  };
+  var LB_POSTER = {
+    1: function () { return 'assets/brand-poster.jpg?v=20261009b'; },
+    2: function () { return 'assets/ere-poster-' + (state.lang === 'en' ? 'en' : 'zh') + '.jpg'; },
+    3: function () { return 'assets/yunjiao-poster.jpg'; }
   };
   function fillLightbox(i) {
     if (!lb) return;
@@ -409,7 +421,7 @@
       if (lbVideo) {
         var src = LB_SRC[i]();
         lbVideo.hidden = false;
-        if (lbVideo.getAttribute('src') !== src) lbVideo.setAttribute('src', src);
+        if (lbVideo.getAttribute('src') !== src) { lbVideo.setAttribute('poster', LB_POSTER[i]()); lbVideo.setAttribute('src', src); }
         var pr = lbVideo.play(); if (pr && pr.catch) pr.catch(function () {});
       }
     }
@@ -533,10 +545,19 @@
   }
   if (!reduce) {
     var cur = $('[data-cursor]'), inner = cur ? cur.firstElementChild : null, drops = $('[data-drops]');
-    var tx = -100, ty = -100, cx = -100, cy = -100;
+    var tx = -100, ty = -100, cx = -100, cy = -100, following = false;
+    var finePointer = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+    // 游標旁的點只在有滑鼠時跑，而且停下來就不再每格重畫
+    function follow() {
+      cx += (tx - cx) * 0.22; cy += (ty - cy) * 0.22;
+      if (cur) cur.style.transform = 'translate(' + cx + 'px, ' + cy + 'px)';
+      if (Math.abs(tx - cx) < 0.2 && Math.abs(ty - cy) < 0.2) { following = false; return; }
+      requestAnimationFrame(follow);
+    }
     window.addEventListener('pointermove', function (e) {
       tx = e.clientX; ty = e.clientY;
-      if (!cur) return;
+      if (!cur || !finePointer || e.pointerType === 'touch') return;
+      if (!following) { following = true; requestAnimationFrame(follow); }
       var t = e.target.closest ? e.target.closest('a, button') : null;
       cur.classList.toggle('d-cursor-big', !!t);
       if (inner) inner.style.background = colorAt(ty);
@@ -551,11 +572,6 @@
       drops.appendChild(d);
       setTimeout(function () { d.remove(); }, 1600);
     }, { passive: true });
-    (function follow() {
-      cx += (tx - cx) * 0.22; cy += (ty - cy) * 0.22;
-      if (cur) cur.style.transform = 'translate(' + cx + 'px, ' + cy + 'px)';
-      requestAnimationFrame(follow);
-    })();
   }
 
   /* ---------- 開始 ---------- */
