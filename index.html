@@ -217,6 +217,27 @@ section[data-anim]{padding-top:96px !important;padding-bottom:96px !important}
 .d-mail-addr{font-weight:600;border-bottom:1.5px solid rgba(255,255,255,0.45);padding-bottom:2px;transition:border-color 0.25s ease}
 .d-mail:hover,.d-mail:focus-visible{color:#FFFFFF;outline:none}
 .d-mail:hover .d-mail-addr,.d-mail:focus-visible .d-mail-addr{border-color:#E35E37}
+/* 頁首的聲音開關：關著是三個小點（品牌的點），打開變成跳動的音量條 */
+.d-snd{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 6px;background:none;border:0;cursor:pointer;font-family:'Poppins','Noto Sans TC',sans-serif;font-size:13px;font-weight:600;color:#6E6E73;transition:color 0.25s ease}
+.d-snd:hover,.d-snd:focus-visible{color:#141414;outline:none}
+.d-snd[aria-pressed="true"]{color:#435BD8}
+.d-snd-bars{display:inline-flex;align-items:flex-end;gap:2px;height:12px}
+.d-snd-bars i{display:block;width:3px;height:3px;border-radius:2px;background:currentColor;transition:height 0.3s ease}
+.d-snd:hover .d-snd-bars i:nth-child(2){height:7px}
+.d-snd[aria-pressed="true"] .d-snd-bars i{animation:d-eq 0.9s ease-in-out infinite}
+.d-snd[aria-pressed="true"] .d-snd-bars i:nth-child(2){animation-delay:0.15s}
+.d-snd[aria-pressed="true"] .d-snd-bars i:nth-child(3){animation-delay:0.3s}
+.d-snd-hero{position:absolute;right:clamp(16px,3vw,40px);bottom:clamp(16px,3vw,36px);z-index:3;color:rgba(255,255,255,0.78);border:1.5px solid rgba(255,255,255,0.55);border-radius:999px;padding:0 16px;min-height:40px}
+.d-snd-hero:hover,.d-snd-hero:focus-visible{color:#E35E37;background:#FFFFFF;border-color:#FFFFFF}
+.d-snd-hero[aria-pressed="true"]{color:#FFFFFF;border-color:#FFFFFF}
+.d-snd-hero[aria-pressed="true"]:hover{color:#E35E37}
+@media (max-width: 640px){.d-snd-hero .d-snd-t{display:inline}}
+.d-snd .d-s-off{display:none}
+.d-snd[aria-pressed="true"] .d-s-on{display:none}
+.d-snd[aria-pressed="true"] .d-s-off{display:inline}
+@keyframes d-eq{0%,100%{height:3px}50%{height:12px}}
+@media (max-width: 640px){.d-snd-t{display:none}.d-snd{padding:0 4px}}
+@media (prefers-reduced-motion: reduce){.d-snd[aria-pressed="true"] .d-snd-bars i{animation:none;height:9px}}
 .d-film-btn .d-s-off{display:none}
 .d-film-btn[aria-pressed="true"] .d-s-on{display:none}
 .d-film-btn[aria-pressed="true"] .d-s-off{display:inline}
@@ -225,7 +246,7 @@ section[data-anim]{padding-top:96px !important;padding-bottom:96px !important}
 [data-seg]{transition:opacity 0.8s ease}
 @media (max-width: 640px){.d-film-btn{font-size:12px;padding:7px 12px}.d-film-ui{gap:8px}}
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261009d">
+<link rel="stylesheet" href="assets/site.css?v=20261009e">
 </head>
 <body>
 <div data-root="" class="lang-zh" style="position: relative; background: #FFFFFF; color: #141414; font-family: 'Poppins', 'Noto Sans TC', sans-serif; min-height: 100vh; overflow-x: clip">
@@ -238,6 +259,7 @@ section[data-anim]{padding-top:96px !important;padding-bottom:96px !important}
 <a href="#work" class="d-nav d-dotfx d-nav-opt"><span class="d-nav-in"><span class="d-en">Work</span><span class="d-en2" aria-hidden="true">Work</span><span class="d-zh">我們做的事</span></span></a>
 <a href="#habit" class="d-nav d-dotfx d-nav-opt"><span class="d-nav-in"><span class="d-en">Habit</span><span class="d-en2" aria-hidden="true">Habit</span><span class="d-zh">怎麼算成功</span></span></a>
 <a href="#contact" class="d-nav d-dotfx"><span class="d-nav-in"><span class="d-en">Let's talk</span><span class="d-en2" aria-hidden="true">Let's talk</span><span class="d-zh">聊一次</span></span></a>
+<button type="button" class="d-snd" data-act="sound" aria-pressed="false" aria-label="開啟音效"><span class="d-snd-bars" aria-hidden="true"><i></i><i></i><i></i></span><span class="d-snd-t"><span class="t-zh">聲音</span><span class="t-en">Sound</span></span></button>
 <button type="button" class="d-lang d-dotfx" data-act="lang" aria-label="Switch to English"><span class="d-lg"><span class="d-lg-a"><span class="t-zh"><b>中</b> / <span class="d-or">EN</span></span><span class="t-en"><span class="d-bl">中</span> / <b class="d-or">EN</b></span></span><span class="d-lg-b" aria-hidden="true"><span class="t-zh">EN ›</span><span class="t-en d-bl">中文 ›</span></span></span></button>
 </nav>
 </header>
@@ -248,6 +270,7 @@ section[data-anim]{padding-top:96px !important;padding-bottom:96px !important}
 <div data-logo-slot="" style="position: relative; z-index: 2; width: min(78%, 760px); aspect-ratio: 952 / 371; margin-top: -40px">
 <img data-logo-img hidden src="assets/dalta-logo-motion.webp" alt="dalta" style="display: block; width: 100%; height: auto">
 </div>
+<button type="button" class="d-snd d-snd-hero" data-act="sound" aria-pressed="false" aria-label="開啟音效"><span class="d-snd-bars" aria-hidden="true"><i></i><i></i><i></i></span><span class="d-snd-t"><span class="t-zh"><span class="d-s-on">開聲音看一次</span><span class="d-s-off">關聲音</span></span><span class="t-en"><span class="d-s-on">Watch with sound</span><span class="d-s-off">Sound off</span></span></span></button>
 </section>
 
 <section data-anim="lead" class="" style="position: relative; max-width: 1240px; margin: 0 auto; padding: 160px 24px 160px clamp(48px, 7vw, 104px); box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 32px 48px">
@@ -270,7 +293,7 @@ section[data-anim]{padding-top:96px !important;padding-bottom:96px !important}
 <p data-label="" class="d-fade-l" style="margin: 0; flex: 1 1 200px; font-family: 'Poppins', 'Noto Sans TC', sans-serif; font-size: 15px; font-weight: 600; color: #435BD8">02　Work<span class="t-zh">　我們做的事</span></p>
 <div data-anim="workTxt" class="d-tiles" style="flex: 999 1 560px; min-width: 0">
 <a href="#work" class="d-fade d-tile d-tilex" data-tile="1" style="background: #F5F5F7; border-radius: 28px; padding: 40px 32px 36px; min-height: 340px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-start; gap: 40px; text-decoration: none; color: #141414; transition-delay: 0.05s">
-<span class="d-tmedia" aria-hidden="true" style="background: #E35E37"><video data-prev="1" src="assets/brand-preview.mp4?v=20261009d" poster="assets/brand-poster.jpg?v=20261009d" loop="" muted="" playsinline="" preload="metadata"></video></span>
+<span class="d-tmedia" aria-hidden="true" style="background: #E35E37"><video data-prev="1" src="assets/brand-preview.mp4?v=20261009e" poster="assets/brand-poster.jpg?v=20261009e" loop="" muted="" playsinline="" preload="metadata"></video></span>
 <span class="d-play" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"></path></svg></span>
 <h2 style="margin: 0; font-family: 'Noto Sans TC', sans-serif; font-weight: 900; font-size: clamp(40px, 4.4vw, 64px); line-height: 1.1; color: #141414"><span class="t-zh">品牌</span><span class="t-en" style="font-family: 'Poppins', sans-serif; letter-spacing: -0.02em; font-size: clamp(28px, 2.1vw, 34px)">Brand</span><span class="d-dot-wrap" data-dot="svc1"><span class="d-dot d-dot-late"><span class="d-dot-blink" style="background: #435BD8"></span></span></span></h2>
 <p class="d-lead"><span class="t-zh">先講清楚你是誰</span><span class="t-en">Know who you are first.</span></p><p class="d-body"><span class="t-zh">定位、命名、標語、視覺。講清楚了，後面每一塊錢才花得準。</span><span class="t-en">Positioning, naming, taglines, visuals. Get it right, and every dollar after works harder.</span></p>
@@ -303,7 +326,7 @@ section[data-anim]{padding-top:96px !important;padding-bottom:96px !important}
 </section>
 
 <section data-film="" data-bgsec="color" class="d-film" aria-label="dalta manifesto: One idea. One new habit.">
-<video data-film-v="" muted playsinline preload="auto" data-film-zh="assets/manifesto-zh.mp4?v=20261009d" data-film-en="assets/manifesto-en.mp4?v=20261009d" data-film-zh-wide="assets/manifesto-wide-zh.mp4?v=20261009d" data-film-en-wide="assets/manifesto-wide-en.mp4?v=20261009d"></video>
+<video data-film-v="" muted playsinline preload="auto" data-film-zh="assets/manifesto-zh.mp4?v=20261009e" data-film-en="assets/manifesto-en.mp4?v=20261009e" data-film-zh-wide="assets/manifesto-wide-zh.mp4?v=20261009e" data-film-en-wide="assets/manifesto-wide-en.mp4?v=20261009e"></video>
 <button type="button" data-act="film-play" class="d-film-play" hidden><span class="t-zh">播放</span><span class="t-en">Play</span></button>
 <div class="d-film-ui">
 <button type="button" data-act="film-sound" class="d-film-btn" aria-pressed="false"><span class="t-zh"><span class="d-s-on">開聲音</span><span class="d-s-off">關聲音</span></span><span class="t-en"><span class="d-s-on">Sound on</span><span class="d-s-off">Sound off</span></span></button>
@@ -371,6 +394,6 @@ section[data-anim]{padding-top:96px !important;padding-bottom:96px !important}
 <div data-drops></div>
 
 </div>
-<script src="assets/site.js?v=20261009d" defer></script>
+<script src="assets/site.js?v=20261009e" defer></script>
 </body>
 </html>

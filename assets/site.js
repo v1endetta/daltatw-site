@@ -23,12 +23,19 @@
 
   var state = { introDone: false, drawn: 0, target: 0, lang: 'zh', live: 0, lb: 0 };
   var langHooks = [];
+  /* 音效：預設關閉，訪客按了右上角的「聲音」才載入、才出聲 */
+  var snd = { on: false, intro: null, tap: null };
+  function sndPlay(a, vol) {
+    if (!snd.on || !a) return;
+    try { a.volume = vol; a.currentTime = 0; } catch (e) {}
+    var pr = a.play && a.play(); if (pr && pr.catch) pr.catch(function () {});
+  }
 
   /* ---------- 語言 ---------- */
   var TEXT = {
-    zh: { label: 'Switch to English', close: '關閉', htmlLang: 'zh-Hant-TW',
+    zh: { label: 'Switch to English', close: '關閉', htmlLang: 'zh-Hant-TW', sndOn: '開啟音效', sndOff: '關閉音效',
       cap: ['', 'dalta｜自有品牌動態：More than data.', 'ERE｜ORIGINAL 極簡開關廣告影片', '耘角 YunJiao｜社群短影音'] },
-    en: { label: '切換成中文', close: 'Close', htmlLang: 'en',
+    en: { label: '切換成中文', close: 'Close', htmlLang: 'en', sndOn: 'Turn sound on', sndOff: 'Turn sound off',
       cap: ['', 'dalta · our own brand film: More than data.', 'ERE · ORIGINAL switch line ad film', 'YunJiao · social reel'] }
   };
   function setLang(lang, remember) {
@@ -39,6 +46,7 @@
     document.documentElement.lang = TEXT[lang].htmlLang;
     var btn = $('[data-act="lang"]');
     if (btn) btn.setAttribute('aria-label', TEXT[lang].label);
+    $$('[data-act="sound"]').forEach(function (sb) { sb.setAttribute('aria-label', snd.on ? TEXT[lang].sndOff : TEXT[lang].sndOn); });
     $$('[data-act="close"]').forEach(function (b) { b.setAttribute('aria-label', TEXT[lang].close); });
     $$('[data-zh-src]').forEach(function (v) {
       var src = v.getAttribute('data-' + lang + '-src'), poster = v.getAttribute('data-' + lang + '-poster');
@@ -143,6 +151,7 @@
     state.introDone = false;
     state.target = 0;
     if (logoImg) logoImg.hidden = true;
+    sndPlay(snd.intro, 0.85);
     var cv = $('[data-intro]');
     var sp = startPoint();
     if (reduce || !cv || !cv.getContext || !sp) { showLogo(); finishIntro(); return; }
@@ -422,6 +431,7 @@
   }
   function playFilm(fromStart) {
     if (!filmV) return;
+    if (snd.on && filmV.muted) { filmV.muted = false; syncSound(); }
     filmV.playsInline = true;
     if (fromStart) { try { filmV.currentTime = 0; } catch (e) {} }
     var pr = filmV.play && filmV.play();
@@ -486,6 +496,25 @@
     else if (act === 'film-sound' && filmV) { e.preventDefault(); filmV.muted = !filmV.muted; syncSound(); if (filmV.paused || filmV.ended) playFilm(filmV.ended); }
     else if (act === 'film-replay' && filmV) { e.preventDefault(); fs.played = true; playFilm(true); }
     else if (act === 'film-play' && filmV) { e.preventDefault(); fs.played = true; film.classList.add('d-film-live'); setFilmLine(true); playFilm(false); }
+    else if (act === 'sound') {
+      e.preventDefault();
+      snd.on = !snd.on;
+      $$('[data-act="sound"]').forEach(function (b) {
+        b.setAttribute('aria-pressed', snd.on ? 'true' : 'false');
+        b.setAttribute('aria-label', snd.on ? TEXT[state.lang].sndOff : TEXT[state.lang].sndOn);
+      });
+      if (snd.on) {
+        if (!snd.intro) { snd.intro = new Audio('assets/intro-sound.mp3?v=20261009e'); snd.intro.preload = 'auto'; }
+        if (!snd.tap) { snd.tap = new Audio('assets/tap-sound.mp3?v=20261009e'); snd.tap.preload = 'auto'; }
+        // 首屏還看得到就整段開場帶聲音重播一次
+        var hr = hero ? hero.getBoundingClientRect() : null;
+        if (hr && hr.bottom > window.innerHeight * 0.5) runIntro();
+        if (filmV && fs.played && !filmV.paused) { filmV.muted = false; syncSound(); }
+      } else {
+        if (snd.intro) snd.intro.pause();
+        if (filmV && !filmV.muted) { filmV.muted = true; syncSound(); }
+      }
+    }
     else if (act === 'top') { e.preventDefault(); window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); }
   });
 
@@ -507,6 +536,7 @@
     window.addEventListener('pointerdown', function (e) {
       if (cur) { cur.classList.add('d-cursor-press'); setTimeout(function () { cur.classList.remove('d-cursor-press'); }, 160); }
       if (!drops || state.lb) return;
+      if (!(e.target.closest && e.target.closest('a, button, video'))) sndPlay(snd.tap, 0.35);
       var d = document.createElement('span');
       d.className = 'd-tapdot'; d.setAttribute('aria-hidden', 'true');
       d.style.left = Math.round(e.clientX) + 'px'; d.style.top = Math.round(e.clientY) + 'px'; d.style.background = colorAt(e.clientY);
