@@ -17,6 +17,14 @@
   var tip = $('[data-tip]');
   var logoImg = $('[data-logo-img]');
   var LOGO_SRC = logoImg ? logoImg.getAttribute('src') : '';
+  // logo 動畫先在背景下載好；還沒好之前，序幕停在那顆點上等它，不會出現空白
+  var logoReady = !LOGO_SRC;
+  if (LOGO_SRC) {
+    var logoPre = new Image();
+    logoPre.onload = logoPre.onerror = function () { logoReady = true; };
+    logoPre.src = LOGO_SRC;
+    if (logoPre.complete) logoReady = true;
+  }
   var bgSecs = $$('[data-bgsec]');
   var secEls = {};
   $$('[data-anim]').forEach(function (el) { secEls[el.getAttribute('data-anim')] = el; });
@@ -189,8 +197,8 @@
         ctx.save(); ctx.translate(px, py); ctx.scale(1 + 0.45 * sq, 1 - 0.45 * sq);
         ctx.beginPath(); ctx.arc(0, 0, 2 + 4 * frac, 0, Math.PI * 2); ctx.fill(); ctx.restore();
       }
-      if (!logoShown && t > HOLD + FLY * 0.85) { logoShown = true; showLogo(); }
-      if (frac >= 1 && t > END + 0.3) {
+      if (!logoShown && t > HOLD + FLY * 0.85 && logoReady) { logoShown = true; showLogo(); }
+      if (frac >= 1 && t > END + 0.3 && logoShown) {
         finishIntro();
         requestAnimationFrame(function () { ctx.clearRect(0, 0, W, H); });
         return;
@@ -386,7 +394,7 @@
   var lb = $('.d-lb'), lbVideo = lb ? $('video', lb) : null, lbImg = lb ? $('[data-lbi]', lb) : null;
   var LB_SRC = {
     1: function () { return 'assets/brand-film.mp4?v=20261009b'; },
-    2: function () { return state.lang === 'en' ? 'assets/ere-original-en.mp4' : 'assets/ere-original-zh.mp4'; },
+    2: function () { return state.lang === 'en' ? 'assets/ere-original-en.mp4?v=20261009f' : 'assets/ere-original-zh.mp4?v=20261009f'; },
     3: function () { return 'assets/yunjiao-reel.mp4'; }
   };
   function fillLightbox(i) {
@@ -552,6 +560,25 @@
 
   /* ---------- 開始 ---------- */
   measure();
-  runIntro();
+  // 等畫面真的畫出來再開始序幕，手機上才不會一開場就少了前幾格
+  requestAnimationFrame(function () { requestAnimationFrame(runIntro); });
   requestAnimationFrame(frame);
+
+  /* ---------- 影片快捲到了才開始下載，首屏不跟 logo 搶網路 ---------- */
+  if (hasIO) {
+    var ioPre = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        var v = e.target;
+        ioPre.unobserve(v);
+        if (v.getAttribute('preload') === 'none') {
+          v.setAttribute('preload', 'auto');
+          if (v.getAttribute('src') && v.readyState === 0 && v.paused) { try { v.load(); } catch (er) {} }
+        }
+      });
+    }, { rootMargin: '800px 0px' });
+    $$('video[preload="none"]').forEach(function (v) { if (!v.hasAttribute('data-lbv')) ioPre.observe(v); });
+  } else {
+    $$('video[preload="none"]').forEach(function (v) { v.setAttribute('preload', 'metadata'); });
+  }
 })();
