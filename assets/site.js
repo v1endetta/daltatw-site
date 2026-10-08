@@ -32,9 +32,9 @@
 
   /* ---------- 語言 ---------- */
   var TEXT = {
-    zh: { label: 'Switch to English', close: '關閉', htmlLang: 'zh-Hant-TW', sndOn: '開啟音效', sndOff: '關閉音效',
+    zh: { label: 'Switch to English', close: '關閉', htmlLang: 'zh-Hant-TW', sndOn: '開啟音效', sndOff: '關閉音效', replay: '重播',
       cap: ['', 'dalta｜自有品牌動態：More than data.', 'ERE｜ORIGINAL 極簡開關廣告影片', '耘角 YunJiao｜社群短影音'] },
-    en: { label: '切換成中文', close: 'Close', htmlLang: 'en', sndOn: 'Turn sound on', sndOff: 'Turn sound off',
+    en: { label: '切換成中文', close: 'Close', htmlLang: 'en', sndOn: 'Turn sound on', sndOff: 'Turn sound off', replay: 'Replay',
       cap: ['', 'dalta · our own brand film: More than data.', 'ERE · ORIGINAL switch line ad film', 'YunJiao · social reel'] }
   };
   function setLang(lang, remember) {
@@ -47,6 +47,8 @@
     if (btn) btn.setAttribute('aria-label', TEXT[lang].label);
     $$('[data-act="sound"]').forEach(function (sb) { sb.setAttribute('aria-label', snd.on ? TEXT[lang].sndOff : TEXT[lang].sndOn); });
     $$('[data-act="close"]').forEach(function (b) { b.setAttribute('aria-label', TEXT[lang].close); });
+    $$('[data-act="film-replay"]').forEach(function (b) { b.setAttribute('aria-label', TEXT[lang].replay); });
+    if (typeof syncSound === 'function') syncSound();
     $$('[data-zh-src]').forEach(function (v) {
       var src = v.getAttribute('data-' + lang + '-src'), poster = v.getAttribute('data-' + lang + '-poster');
       if (v.getAttribute('src') !== src) { v.setAttribute('poster', poster); v.setAttribute('src', src); }
@@ -530,7 +532,7 @@
   }
   function syncSound() {
     var b = film ? $('[data-act="film-sound"]', film) : null;
-    if (b && filmV) b.setAttribute('aria-pressed', filmV.muted ? 'false' : 'true');
+    if (b && filmV) { b.setAttribute('aria-pressed', filmV.muted ? 'false' : 'true'); b.setAttribute('aria-label', filmV.muted ? TEXT[state.lang].sndOn : TEXT[state.lang].sndOff); }
   }
   function syncFilmSrc() {
     if (!film || !filmV) return;
