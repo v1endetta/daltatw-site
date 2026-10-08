@@ -69,7 +69,7 @@ section[data-anim]{padding-top:96px !important;padding-bottom:96px !important}
 .d-tile.d-tilex{min-height:0 !important;padding:32px 24px 28px !important}
 .d-tilex h2{margin-bottom:20px !important}
 .d-play{top:20px;right:20px;width:36px;height:36px}
-.d-pill{flex-direction:column;align-items:flex-start !important;gap:2px !important;border-radius:24px !important;padding:16px 24px !important}
+.d-pill{padding:12px 28px !important}
 .d-pill-sep{display:none}
 .d-sublabel{display:block;margin-bottom:6px}
 .d-subrule{display:none !important}
@@ -209,6 +209,14 @@ section[data-anim]{padding-top:96px !important;padding-bottom:96px !important}
 .d-igf:hover .d-igf-mark,.d-igf:focus-visible .d-igf-mark{transform:translateY(-2px)}
 .d-igf:hover .d-igf-mark img+img,.d-igf:focus-visible .d-igf-mark img+img{opacity:1}
 .d-igf:focus-visible{outline:2px solid #435BD8;outline-offset:4px;border-radius:4px}
+/* 聯絡區：主按鈕預約 30 分鐘，旁邊留一條寄信的文字連結 */
+.d-pill{position:relative}
+.d-pill-arrow{display:inline-block;transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1)}
+.d-pill:hover .d-pill-arrow,.d-pill:focus-visible .d-pill-arrow{transform:translateX(4px)}
+.d-mail{display:inline-flex;align-items:center;gap:6px;min-height:44px;font-family:'Poppins','Noto Sans TC',sans-serif;font-size:16px;font-weight:500;color:rgba(255,255,255,0.82);text-decoration:none;transition:color 0.25s ease}
+.d-mail-addr{font-weight:600;border-bottom:1.5px solid rgba(255,255,255,0.45);padding-bottom:2px;transition:border-color 0.25s ease}
+.d-mail:hover,.d-mail:focus-visible{color:#FFFFFF;outline:none}
+.d-mail:hover .d-mail-addr,.d-mail:focus-visible .d-mail-addr{border-color:#E35E37}
 .d-film-btn .d-s-off{display:none}
 .d-film-btn[aria-pressed="true"] .d-s-on{display:none}
 .d-film-btn[aria-pressed="true"] .d-s-off{display:inline}
@@ -217,7 +225,7 @@ section[data-anim]{padding-top:96px !important;padding-bottom:96px !important}
 [data-seg]{transition:opacity 0.8s ease}
 @media (max-width: 640px){.d-film-btn{font-size:12px;padding:7px 12px}.d-film-ui{gap:8px}}
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261009c">
+<link rel="stylesheet" href="assets/site.css?v=20261009d">
 </head>
 <body>
 <div data-root="" class="lang-zh" style="position: relative; background: #FFFFFF; color: #141414; font-family: 'Poppins', 'Noto Sans TC', sans-serif; min-height: 100vh; overflow-x: clip">
@@ -262,7 +270,7 @@ section[data-anim]{padding-top:96px !important;padding-bottom:96px !important}
 <p data-label="" class="d-fade-l" style="margin: 0; flex: 1 1 200px; font-family: 'Poppins', 'Noto Sans TC', sans-serif; font-size: 15px; font-weight: 600; color: #435BD8">02　Work<span class="t-zh">　我們做的事</span></p>
 <div data-anim="workTxt" class="d-tiles" style="flex: 999 1 560px; min-width: 0">
 <a href="#work" class="d-fade d-tile d-tilex" data-tile="1" style="background: #F5F5F7; border-radius: 28px; padding: 40px 32px 36px; min-height: 340px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-start; gap: 40px; text-decoration: none; color: #141414; transition-delay: 0.05s">
-<span class="d-tmedia" aria-hidden="true" style="background: #E35E37"><video data-prev="1" src="assets/brand-preview.mp4?v=20261009c" poster="assets/brand-poster.jpg?v=20261009c" loop="" muted="" playsinline="" preload="metadata"></video></span>
+<span class="d-tmedia" aria-hidden="true" style="background: #E35E37"><video data-prev="1" src="assets/brand-preview.mp4?v=20261009d" poster="assets/brand-poster.jpg?v=20261009d" loop="" muted="" playsinline="" preload="metadata"></video></span>
 <span class="d-play" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"></path></svg></span>
 <h2 style="margin: 0; font-family: 'Noto Sans TC', sans-serif; font-weight: 900; font-size: clamp(40px, 4.4vw, 64px); line-height: 1.1; color: #141414"><span class="t-zh">品牌</span><span class="t-en" style="font-family: 'Poppins', sans-serif; letter-spacing: -0.02em; font-size: clamp(28px, 2.1vw, 34px)">Brand</span><span class="d-dot-wrap" data-dot="svc1"><span class="d-dot d-dot-late"><span class="d-dot-blink" style="background: #435BD8"></span></span></span></h2>
 <p class="d-lead"><span class="t-zh">先講清楚你是誰</span><span class="t-en">Know who you are first.</span></p><p class="d-body"><span class="t-zh">定位、命名、標語、視覺。講清楚了，後面每一塊錢才花得準。</span><span class="t-en">Positioning, naming, taglines, visuals. Get it right, and every dollar after works harder.</span></p>
@@ -295,7 +303,7 @@ section[data-anim]{padding-top:96px !important;padding-bottom:96px !important}
 </section>
 
 <section data-film="" data-bgsec="color" class="d-film" aria-label="dalta manifesto: One idea. One new habit.">
-<video data-film-v="" muted playsinline preload="auto" data-film-zh="assets/manifesto-zh.mp4?v=20261009c" data-film-en="assets/manifesto-en.mp4?v=20261009c" data-film-zh-wide="assets/manifesto-wide-zh.mp4?v=20261009c" data-film-en-wide="assets/manifesto-wide-en.mp4?v=20261009c"></video>
+<video data-film-v="" muted playsinline preload="auto" data-film-zh="assets/manifesto-zh.mp4?v=20261009d" data-film-en="assets/manifesto-en.mp4?v=20261009d" data-film-zh-wide="assets/manifesto-wide-zh.mp4?v=20261009d" data-film-en-wide="assets/manifesto-wide-en.mp4?v=20261009d"></video>
 <button type="button" data-act="film-play" class="d-film-play" hidden><span class="t-zh">播放</span><span class="t-en">Play</span></button>
 <div class="d-film-ui">
 <button type="button" data-act="film-sound" class="d-film-btn" aria-pressed="false"><span class="t-zh"><span class="d-s-on">開聲音</span><span class="d-s-off">關聲音</span></span><span class="t-en"><span class="d-s-on">Sound on</span><span class="d-s-off">Sound off</span></span></button>
@@ -309,7 +317,8 @@ section[data-anim]{padding-top:96px !important;padding-bottom:96px !important}
 <div data-anim="talkTxt" class="" style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 48px">
 <p data-end="" style="margin: 0; font-family: 'Noto Sans TC', sans-serif; font-weight: 900; font-size: clamp(28px, 5.2vw, 76px); line-height: 1.18; letter-spacing: -0.01em"><span class="t-zh"><span class="d-line"><span class="d-line-in" style="transition-delay: 0.05s">先聊一次</span></span></span><span class="t-en" style="font-family: 'Poppins', sans-serif; letter-spacing: -0.02em"><span class="d-line"><span class="d-line-in" style="transition-delay: 0.05s">Let&#39;s talk</span></span></span><span class="d-dot-wrap" data-dot="talk"><span class="d-dot d-dot-late"><span class="d-dot-blink" style="background: #E35E37"></span></span></span><br><span class="t-zh"><span class="d-line"><span class="d-line-in" style="transition-delay: 0.2s">三十分鐘，不收費。</span></span></span><span class="t-en" style="font-family: 'Poppins', sans-serif; letter-spacing: -0.02em"><span class="d-line"><span class="d-line-in" style="transition-delay: 0.2s">30 minutes, on us.</span></span></span></p>
 <div class="d-fade" style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px 32px; font-family: 'Poppins', 'Noto Sans TC', sans-serif; transition-delay: 0.5s">
-<a href="mailto:contact@daltatw.com" class="d-pill" style="display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px 14px; min-height: 56px; padding: 10px 32px; box-sizing: border-box; border-radius: 999px; background: #FFFFFF; color: #435BD8; text-decoration: none; font-family: 'Poppins', sans-serif"><span style="font-size: 19px; font-weight: 700"><span class="t-zh">Let's talk</span><span class="t-en">Email us</span></span><span class="d-pill-sep" aria-hidden="true" style="width: 1px; height: 20px; background: #435BD8; opacity: 0.35"></span><span style="font-size: 18.5px; font-weight: 700">contact@daltatw.com</span></a>
+<a href="https://calendly.com/noemi-daltatw/30min" target="_blank" rel="noopener" class="d-pill" style="display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px 14px; min-height: 56px; padding: 10px 32px; box-sizing: border-box; border-radius: 999px; background: #FFFFFF; color: #435BD8; text-decoration: none; font-family: 'Poppins', sans-serif"><span style="font-size: 19px; font-weight: 700">Let's talk</span><span class="d-pill-arrow" aria-hidden="true" style="font-size: 19px; font-weight: 700">→</span><span class="t-zh" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">（預約 30 分鐘，另開新視窗）</span><span class="t-en" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">(book 30 minutes, opens in a new tab)</span></a>
+<a href="mailto:contact@daltatw.com" class="d-mail"><span class="t-zh">或寄信</span><span class="t-en">or email</span><span class="d-mail-addr">contact@daltatw.com</span></a>
 </div>
 </div>
 </div>
@@ -362,6 +371,6 @@ section[data-anim]{padding-top:96px !important;padding-bottom:96px !important}
 <div data-drops></div>
 
 </div>
-<script src="assets/site.js?v=20261009c" defer></script>
+<script src="assets/site.js?v=20261009d" defer></script>
 </body>
 </html>
