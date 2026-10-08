@@ -15,16 +15,7 @@
   var hero = $('[data-hero]');
   var header = $('.d-hdr');
   var tip = $('[data-tip]');
-  var logoImg = $('[data-logo-img]');
-  var LOGO_SRC = logoImg ? logoImg.getAttribute('src') : '';
-  // logo 動畫先在背景下載好；還沒好之前，序幕停在那顆點上等它，不會出現空白
-  var logoReady = !LOGO_SRC;
-  if (LOGO_SRC) {
-    var logoPre = new Image();
-    logoPre.onload = logoPre.onerror = function () { logoReady = true; };
-    logoPre.src = LOGO_SRC;
-    if (logoPre.complete) logoReady = true;
-  }
+  var LOGO_SRC = '';
   var bgSecs = $$('[data-bgsec]');
   var secEls = {};
   $$('[data-anim]').forEach(function (el) { secEls[el.getAttribute('data-anim')] = el; });
@@ -145,40 +136,90 @@
     var sr = hero.getBoundingClientRect(), lr = slot.getBoundingClientRect();
     return { sr: sr, x: lr.left - sr.left + lr.width / 2, y: Math.min(sr.height - 48, lr.bottom - sr.top + 56) };
   }
-  var logoRuns = 0;
-  function showLogo() {
-    if (!logoImg) return;
-    logoImg.hidden = false;
-    // 第一次直接播；之後重播要換一個網址，瀏覽器才會讓動畫從頭開始
-    logoRuns++;
-    logoImg.src = logoRuns > 1 ? LOGO_SRC + '?r=' + logoRuns : LOGO_SRC;
-  }
-  function finishIntro() { state.introDone = true; updateTarget(); }
+  /* ---------- logo 向量動畫（照原版逐格量出的數據）：字母依序落下、數據點跳進 i、點眨兩下、字母跳兩下 ---------- */
+  var LG = (function () {
+    var svgEl = $('[data-logo-svg]');
+    if (!svgEl) return null;
+    var g = {};
+    ['d', 'a1', 'stroke', 'r', 'a2', 'dot'].forEach(function (n) { g[n] = $('[data-p="' + n + '"]', svgEl); });
+    var c01 = function (x) { return x < 0 ? 0 : x > 1 ? 1 : x; };
+    var FX = 1788.5, FY = 1401;
+    var LETK = {
+      d: [[0.16, -900], [0.24, -646], [0.28, -581], [0.32, -516], [0.36, -442], [0.40, -355], [0.44, -251], [0.48, -135], [0.52, -3], [0.56, -15], [0.60, -17], [0.64, -7], [0.68, 0]],
+      a1: [[0.32, -900], [0.40, -593], [0.44, -522], [0.48, -458], [0.52, -400], [0.56, -337], [0.60, -266], [0.64, -180], [0.68, -77], [0.72, -3], [0.76, -12], [0.80, -12], [0.84, 0]],
+      stroke: [[0.48, -900], [0.56, -451], [0.60, -408], [0.64, -365], [0.68, -314], [0.72, -251], [0.76, -179], [0.80, -95], [0.84, -3], [0.88, -10], [0.92, -13], [0.96, -5], [1.00, 0]],
+      r: [[0.60, -900], [0.68, -465], [0.72, -417], [0.76, -368], [0.80, -306], [0.84, -232], [0.88, -149], [0.92, -49], [0.96, -5], [1.00, -13], [1.04, -10], [1.08, 0]],
+      a2: [[0.68, -900], [0.76, -609], [0.80, -537], [0.84, -471], [0.88, -415], [0.92, -352], [0.96, -282], [1.00, -203], [1.04, -107], [1.08, 0], [1.12, -10], [1.16, -12], [1.20, -5], [1.24, 0]]
+    };
+    var DOTK = [[1.60, 1317, 1409], [1.64, 1380, 1372], [1.68, 1456, 1318], [1.72, 1513, 1270], [1.76, 1575, 1250], [1.80, 1626, 1252], [1.84, 1653, 1282], [1.88, 1661, 1338], [1.92, 1668, 1403], [1.96, 1752, 1393], [2.00, 1762, 1361], [2.04, 1770, 1343], [2.08, 1775, 1339], [2.12, 1779, 1351], [2.16, 1782, 1378], [2.20, 1786, 1405], [2.24, FX, FY]];
+    var DOTS = [[1.54, 1, 1], [1.60, 1.12, 0.83], [1.66, 0.95, 1.06], [1.72, 1, 1], [1.88, 1, 1], [1.92, 1.15, 0.8], [1.98, 0.95, 1.07], [2.06, 0.92, 1.12], [2.14, 1, 1], [2.20, 1.07, 0.88], [2.27, 1, 1]];
+    var BLINK = [[3.00, 1], [3.04, 0.07], [3.12, 0.07], [3.16, 1], [3.32, 1], [3.36, 0.07], [3.44, 0.07], [3.48, 1]];
+    var WAVE = [2.90, 3.22], ORDER = { d: 0, a1: 1, stroke: 2, r: 3, a2: 4 };
+    function cr(K, t, j, i) {
+      var p0 = K[Math.max(0, i - 2)], p1 = K[i - 1], p2 = K[i], p3 = K[Math.min(K.length - 1, i + 1)], u = (t - p1[0]) / (p2[0] - p1[0]), u2 = u * u, u3 = u2 * u;
+      return 0.5 * ((2 * p1[j]) + (-p0[j] + p2[j]) * u + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * u2 + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * u3);
+    }
+    function seg(K, t) { for (var i = 1; i < K.length; i++) if (t <= K[i][0]) return i; return -1; }
+    function spl(K, t, j) { if (t <= K[0][0]) return K[0][j]; var i = seg(K, t); return i < 0 ? K[K.length - 1][j] : cr(K, t, j, i); }
+    function lin(K, t, j) { if (t <= K[0][0]) return K[0][j]; var i = seg(K, t); if (i < 0) return K[K.length - 1][j]; var a = K[i - 1], b = K[i]; return a[j] + (b[j] - a[j]) * (t - a[0]) / (b[0] - a[0]); }
+    function fall(t, k) { var K = LETK[k]; if (t <= K[0][0]) return -900; return spl(K, t, 1); }
+    function wave(t, k) { var off = 0, i = ORDER[k]; for (var w = 0; w < WAVE.length; w++) { var kk = (t - WAVE[w] - i * 0.035) / 0.2; if (kk > 0 && kk < 1) off -= 26 * 4 * kk * (1 - kk); } return off; }
+    function dip(t) { if (t < 2.40 || t > 2.84) return 0; if (t < 2.48) return 5 * (t - 2.40) / 0.08; if (t < 2.64) return 5; return 5 * (1 - (t - 2.64) / 0.2); }
+    // P：粒子點在 logo 座標裡的位置；s0：粒子點相對 logo 點的大小
+    function render(t, P) {
+      var dp = dip(t);
+      ['d', 'a1', 'r', 'a2', 'stroke'].forEach(function (k) { g[k].setAttribute('transform', 'translate(0 ' + (fall(t, k) + dp + wave(t, k)).toFixed(1) + ')'); });
+      if (t < 1.28 || !P) { g.dot.setAttribute('opacity', '0'); return; }
+      var x, y, grow = 1;
+      if (t < 1.60) {
+        var k = c01((t - 1.28) / 0.32), bx = 1317, by = 1409;
+        x = P.x + (bx - P.x) * k; y = P.y + (by - P.y) * k - 4 * (Math.max(P.y, by) - 1120) * k * (1 - k);
+        grow = P.s0 + (1 - P.s0) * Math.min(1, k * 1.6);
+      } else { x = spl(DOTK, t, 1); y = spl(DOTK, t, 2); }
+      var sx = lin(DOTS, t, 1) * grow, sy = lin(DOTS, t, 2) * lin(BLINK, t, 1) * grow;
+      y += dp + (t > 2.5 ? wave(t, 'stroke') : 0);
+      g.dot.setAttribute('opacity', '1');
+      g.dot.setAttribute('transform', 'translate(' + (x - FX).toFixed(1) + ' ' + (y - FY).toFixed(1) + ') translate(1788.5 1442.5) scale(' + sx.toFixed(3) + ' ' + sy.toFixed(3) + ') translate(-1788.5 -1442.5)');
+    }
+    // 頁面座標 → logo 座標
+    function toLogo(cx, cy) {
+      var m = svgEl.getScreenCTM(); if (!m) return { x: 1620, y: 1900, k: 0.33 };
+      var pt = svgEl.createSVGPoint(); pt.x = cx; pt.y = cy; var q = pt.matrixTransform(m.inverse());
+      return { x: q.x, y: q.y, k: m.a };
+    }
+    function dotScreen() { var m = svgEl.getScreenCTM(); if (!m) return null; var pt = svgEl.createSVGPoint(); pt.x = FX; pt.y = FY; var q = pt.matrixTransform(m); return { x: q.x, y: q.y, r: 41.5 * m.a }; }
+    return { render: render, toLogo: toLogo, dotScreen: dotScreen, END: 3.75 };
+  })();
+
+  function finishIntro() { state.introDone = true; tipPlaced = false; updateTarget(); }
   function runIntro() {
     cancelAnimationFrame(introRaf);
     state.introDone = false;
     state.target = 0;
-    if (logoImg) logoImg.hidden = true;
+    if (LG) LG.render(-1, null);
     sndPlay(snd.intro, 0.85);
     var cv = $('[data-intro]');
     var sp = startPoint();
-    if (reduce || !cv || !cv.getContext || !sp) { showLogo(); finishIntro(); return; }
+    if (reduce || !cv || !cv.getContext || !sp) { if (LG) LG.render(9, { x: 1788.5, y: 1401, s0: 1 }); finishIntro(); return; }
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     var W = sp.sr.width, H = sp.sr.height;
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     var ctx = cv.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    var px = sp.x, py = sp.y;
+    var px = sp.x, py = sp.y, DOTR = 6;
     var N = Math.round(Math.min(240, Math.max(100, W * H / 5200)));
     var parts = [];
     for (var i = 0; i < N; i++) {
       var x = Math.random() * W, y = Math.random() * H, dx = px - x, dy = py - y, len = Math.sqrt(dx * dx + dy * dy) || 1;
       parts.push({ x: x, y: y, r: 1.4 + Math.random() * 2.8, blue: Math.random() < 0.28, delay: Math.random() * 0.5, bend: (Math.random() - 0.5) * 0.6 * len, nx: -dy / len, ny: dx / len, ph: Math.random() * 6.28 });
     }
-    var t0 = performance.now(), HOLD = 0.6, FLY = 1.0, END = HOLD + 0.5 + FLY, logoShown = false;
+    var P = null;
+    if (LG) { var q = LG.toLogo(sp.sr.left + px, sp.sr.top + py); P = { x: q.x, y: q.y, s0: Math.min(1, DOTR / (41.5 * q.k)) }; }
+    var LOGO0 = 1.45, HAND = 1.28;
+    var t0 = performance.now(), HOLD = 0.6, FLY = 1.0;
     var ease = function (t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
     (function step(now) {
-      var t = (now - t0) / 1000, arrived = 0;
+      var t = (now - t0) / 1000, lt = t - LOGO0, arrived = 0;
       ctx.clearRect(0, 0, W, H);
       for (var i = 0; i < parts.length; i++) {
         var p = parts[i], k = Math.max(0, Math.min(1, (t - HOLD - p.delay) / FLY));
@@ -191,14 +232,25 @@
         ctx.beginPath(); ctx.arc(x, y, p.r * (1 - 0.5 * e), 0, Math.PI * 2); ctx.fill();
       }
       var frac = arrived / parts.length;
-      if (frac > 0) {
-        var sq = frac >= 1 ? Math.max(0, 1 - (t - END) * 4) : 0;
+      // 聚好的那顆點，等字母落完就跳進 logo，變成 i 上的點
+      if (frac > 0 && lt < HAND) {
         ctx.globalAlpha = 1; ctx.fillStyle = '#FFFFFF';
-        ctx.save(); ctx.translate(px, py); ctx.scale(1 + 0.45 * sq, 1 - 0.45 * sq);
-        ctx.beginPath(); ctx.arc(0, 0, 2 + 4 * frac, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+        ctx.beginPath(); ctx.arc(px, py, (DOTR - 4) + 4 * frac, 0, Math.PI * 2); ctx.fill();
       }
-      if (!logoShown && t > HOLD + FLY * 0.85 && logoReady) { logoShown = true; showLogo(); }
-      if (frac >= 1 && t > END + 0.3 && logoShown) {
+      if (LG) LG.render(lt, P);
+      // 最後從 i 的點滴下一顆小點，落到下面，成為往下畫線的起點
+      var DRIP = LG ? LG.END : 0;
+      if (LG && lt > DRIP) {
+        var ds = LG.dotScreen(), kd = Math.min(1, (lt - DRIP) / 0.42);
+        if (ds) {
+          var sx = ds.x - sp.sr.left, sy = ds.y - sp.sr.top + ds.r * 0.6;
+          var yy = sy + (py - sy) * kd * kd, sq = kd >= 1 ? Math.max(0, 1 - (lt - DRIP - 0.42) * 6) : 0;
+          ctx.globalAlpha = 1; ctx.fillStyle = '#FFFFFF';
+          ctx.save(); ctx.translate(sx + (px - sx) * kd, yy); ctx.scale(1 + 0.4 * sq, 1 - 0.4 * sq);
+          ctx.beginPath(); ctx.arc(0, 0, DOTR * (0.55 + 0.45 * kd), 0, Math.PI * 2); ctx.fill(); ctx.restore();
+        }
+      }
+      if (lt > DRIP + 0.62) {
         finishIntro();
         requestAnimationFrame(function () { ctx.clearRect(0, 0, W, H); });
         return;
@@ -524,7 +576,7 @@
         b.setAttribute('aria-label', snd.on ? TEXT[state.lang].sndOff : TEXT[state.lang].sndOn);
       });
       if (snd.on) {
-        if (!snd.intro) { snd.intro = new Audio('assets/intro-sound.mp3?v=20261009e'); snd.intro.preload = 'auto'; }
+        if (!snd.intro) { snd.intro = new Audio('assets/intro-sound.mp3?v=20261009h'); snd.intro.preload = 'auto'; }
         if (!snd.tap) { snd.tap = new Audio('assets/tap-sound.mp3?v=20261009e'); snd.tap.preload = 'auto'; }
         // 首屏還看得到就整段開場帶聲音重播一次
         var hr = hero ? hero.getBoundingClientRect() : null;
@@ -547,6 +599,7 @@
     var cur = $('[data-cursor]'), inner = cur ? cur.firstElementChild : null, drops = $('[data-drops]');
     var tx = -100, ty = -100, cx = -100, cy = -100, following = false;
     var finePointer = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+    if (cur) cur.style.transform = 'translate(-100px, -100px)';
     // 游標旁的點只在有滑鼠時跑，而且停下來就不再每格重畫
     function follow() {
       cx += (tx - cx) * 0.22; cy += (ty - cy) * 0.22;
