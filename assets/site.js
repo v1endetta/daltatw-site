@@ -652,4 +652,23 @@
   } else {
     $$('video[preload="none"]').forEach(function (v) { v.setAttribute('preload', 'metadata'); });
   }
+  /* ---------- 5–8× 的點：第一次捲到才播一次 ---------- */
+  (function () {
+    var d = $('[data-dots]');
+    if (!d) return;
+    if (reduce || !hasIO) { d.classList.add('d-done'); return; }
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        io.disconnect();
+        // 等整塊淡入完成再開始，第一顆點掉下來才看得到
+        var box = d.closest('.d-stat') || d, t0 = Date.now();
+        (function wait() {
+          if (parseFloat(getComputedStyle(box).opacity) >= 0.98 || Date.now() - t0 > 3000) setTimeout(function () { d.classList.add('d-go'); }, 250);
+          else requestAnimationFrame(wait);
+        })();
+      });
+    }, { threshold: 1 });
+    io.observe(d);
+  })();
 })();
