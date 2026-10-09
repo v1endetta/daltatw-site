@@ -33,8 +33,10 @@
   /* ---------- 語言 ---------- */
   var TEXT = {
     zh: { label: 'Switch to English', close: '關閉', htmlLang: 'zh-Hant-TW', sndOn: '開啟音效', sndOff: '關閉音效', replay: '重播',
+      cap1: ['dalta｜品牌宣言影片：每個時刻', 'dalta｜自有品牌動態：More than data.'], pick: '看第 {n} 支',
       cap: ['', 'dalta｜自有品牌動態：More than data.', 'ERE｜ORIGINAL 極簡開關廣告影片', '耘角 YunJiao｜社群短影音'] },
     en: { label: '切換成中文', close: 'Close', htmlLang: 'en', sndOn: 'Turn sound on', sndOff: 'Turn sound off', replay: 'Replay',
+      cap1: ['dalta · brand film: Every Moment', 'dalta · our own brand film: More than data.'], pick: 'Play film {n}',
       cap: ['', 'dalta · our own brand film: More than data.', 'ERE · ORIGINAL switch line ad film', 'YunJiao · social reel'] }
   };
   function setLang(lang, remember) {
@@ -457,19 +459,38 @@
   var lb = $('.d-lb'), lbVideo = lb ? $('video', lb) : null, lbImg = lb ? $('[data-lbi]', lb) : null;
   // 手機和小螢幕放 720p 版（檔案約一半），行動網路才不會一直轉圈；大螢幕維持 1080p
   var small = touch || (window.matchMedia && window.matchMedia('(max-width: 900px)').matches);
+  // 品牌格一次放兩支：先《每個時刻》，播完自動接 logo 影片；下方兩顆點可以切換
+  var LB_LIST = {
+    1: [
+      { src: function () { return 'assets/everymoment-' + (state.lang === 'en' ? 'en' : 'zh') + (small ? '-720' : '') + '.mp4?v=20261009m'; },
+        poster: function () { return 'assets/everymoment-poster-' + (state.lang === 'en' ? 'en' : 'zh') + '.jpg?v=20261009m'; } },
+      { src: function () { return 'assets/brand-film.mp4?v=20261009b'; },
+        poster: function () { return 'assets/brand-poster.jpg?v=20261009b'; } }
+    ]
+  };
+  var lbIdx = 0, lbPager = lb ? $('[data-lbpager]', lb) : null;
   var LB_SRC = {
-    1: function () { return 'assets/brand-film.mp4?v=20261009b'; },
+    1: function () { return LB_LIST[1][lbIdx].src(); },
     2: function () { return 'assets/ere-original-' + (state.lang === 'en' ? 'en' : 'zh') + (small ? '-720' : '') + '.mp4?v=20261009g'; },
     3: function () { return small ? 'assets/yunjiao-reel-720.mp4?v=20261009g' : 'assets/yunjiao-reel.mp4'; }
   };
   var LB_POSTER = {
-    1: function () { return 'assets/brand-poster.jpg?v=20261009b'; },
+    1: function () { return LB_LIST[1][lbIdx].poster(); },
     2: function () { return 'assets/ere-poster-' + (state.lang === 'en' ? 'en' : 'zh') + '.jpg'; },
     3: function () { return 'assets/yunjiao-poster.jpg'; }
   };
   function fillLightbox(i) {
     if (!lb) return;
-    var cap = TEXT[state.lang].cap[i];
+    var list = LB_LIST[i];
+    if (!list) lbIdx = 0; else if (lbIdx >= list.length) lbIdx = 0;
+    var cap = list ? TEXT[state.lang].cap1[lbIdx] : TEXT[state.lang].cap[i];
+    if (lbPager) {
+      lbPager.hidden = !list;
+      if (list) $$('button', lbPager).forEach(function (b, k) {
+        b.setAttribute('aria-pressed', k === lbIdx ? 'true' : 'false');
+        b.setAttribute('aria-label', TEXT[state.lang].pick.replace('{n}', k + 1));
+      });
+    }
     lb.setAttribute('aria-label', cap);
     var p = $('p', lb); if (p) p.textContent = cap;
     var frameBox = lbVideo ? lbVideo.parentNode : null;
@@ -488,6 +509,7 @@
     if (!lb) return;
     setLive(0);
     state.lb = i;
+    lbIdx = 0;
     lb.hidden = false;
     document.body.classList.add('d-lock');
     fillLightbox(i);
@@ -501,6 +523,16 @@
     document.body.classList.remove('d-lock');
   }
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && state.lb) closeLb(); });
+  if (lbPager) lbPager.addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('button') : null;
+    if (!b || !state.lb || !LB_LIST[state.lb]) return;
+    lbIdx = +b.getAttribute('data-k'); fillLightbox(state.lb);
+  });
+  // 一支播完自動接下一支，最後一支播完就停在結尾
+  if (lbVideo) lbVideo.addEventListener('ended', function () {
+    var list = LB_LIST[state.lb];
+    if (list && lbIdx < list.length - 1) { lbIdx++; fillLightbox(state.lb); }
+  });
 
   /* ---------- manifesto 影片：線的點落到中央才開播，捲回去就重來 ---------- */
   function setFilmLine(hidden) {
