@@ -126,6 +126,8 @@
       entries.forEach(function (e) {
         var show = !e.isIntersecting || e.intersectionRatio < 0.9;
         if (header) header.classList.toggle('d-hdr-on', show);
+        // 序幕還沒跑完就往下捲：直接收尾，線才能馬上跟著畫
+        if (!state.introDone && e.intersectionRatio < 0.6) skipIntro();
         if (!e.isIntersecting) { heroLeft = true; return; }
         if (e.intersectionRatio >= 0.6 && heroLeft && state.introDone) { heroLeft = false; runIntro('short'); }
       });
@@ -196,6 +198,15 @@
   })();
 
   function finishIntro() { state.introDone = true; tipPlaced = false; updateTarget(); }
+  function skipIntro() {
+    if (state.introDone) return;
+    cancelAnimationFrame(introRaf);
+    var cv = $('[data-intro]');
+    if (cv && cv.getContext) { var c2 = cv.getContext('2d'); c2.setTransform(1, 0, 0, 1, 0, 0); c2.clearRect(0, 0, cv.width, cv.height); }
+    if (LG) LG.render(9, { x: 1788.5, y: 1401, s0: 1 });
+    if (snd.intro && !snd.intro.paused) snd.intro.pause();
+    finishIntro();
+  }
   // 捲回首屏時播短版：跳過粒子、不放音效，直接從 logo 字母進場開始
   function runIntro(mode) {
     var SHORT = mode === 'short';
@@ -404,6 +415,10 @@
   window.addEventListener('scroll', updateTarget, { passive: true });
   window.addEventListener('load', measure);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+  // 中文字型是延後載入的，字型換上去、或任何內容改變高度時，線的位置要跟著重算，不然會對不上段落
+  var rm = 0, remeasure = function () { clearTimeout(rm); rm = setTimeout(measure, 120); };
+  if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', remeasure);
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(remeasure).observe(root);
   [300, 1200, 3000].forEach(function (t) { setTimeout(measure, t); });
 
   /* ---------- 服務磚：電腦指到撐開；手機捲到就播 ---------- */
