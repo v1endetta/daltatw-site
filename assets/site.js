@@ -125,7 +125,7 @@
         var show = !e.isIntersecting || e.intersectionRatio < 0.9;
         if (header) header.classList.toggle('d-hdr-on', show);
         if (!e.isIntersecting) { heroLeft = true; return; }
-        if (e.intersectionRatio >= 0.6 && heroLeft && state.introDone) { heroLeft = false; runIntro(); }
+        if (e.intersectionRatio >= 0.6 && heroLeft && state.introDone) { heroLeft = false; runIntro('short'); }
       });
     }, { threshold: [0, 0.6, 0.9] }).observe(hero);
   }
@@ -194,12 +194,14 @@
   })();
 
   function finishIntro() { state.introDone = true; tipPlaced = false; updateTarget(); }
-  function runIntro() {
+  // 捲回首屏時播短版：跳過粒子、不放音效，直接從 logo 字母進場開始
+  function runIntro(mode) {
+    var SHORT = mode === 'short';
     cancelAnimationFrame(introRaf);
     state.introDone = false;
     state.target = 0;
     if (LG) LG.render(-1, null);
-    sndPlay(snd.intro, 0.85);
+    if (!SHORT) sndPlay(snd.intro, 0.85);
     var cv = $('[data-intro]');
     var sp = startPoint();
     if (reduce || !cv || !cv.getContext || !sp) { if (LG) LG.render(9, { x: 1788.5, y: 1401, s0: 1 }); finishIntro(); return; }
@@ -211,14 +213,14 @@
     var px = sp.x, py = sp.y, DOTR = 6;
     var N = Math.round(Math.min(240, Math.max(100, W * H / 5200)));
     var parts = [];
-    for (var i = 0; i < N; i++) {
+    for (var i = 0; i < (SHORT ? 0 : N); i++) {
       var x = Math.random() * W, y = Math.random() * H, dx = px - x, dy = py - y, len = Math.sqrt(dx * dx + dy * dy) || 1;
       parts.push({ x: x, y: y, r: 1.4 + Math.random() * 2.8, blue: Math.random() < 0.28, delay: Math.random() * 0.5, bend: (Math.random() - 0.5) * 0.6 * len, nx: -dy / len, ny: dx / len, ph: Math.random() * 6.28 });
     }
     var P = null;
     if (LG) { var q = LG.toLogo(sp.sr.left + px, sp.sr.top + py); P = { x: q.x, y: q.y, s0: Math.min(1, DOTR / (41.5 * q.k)) }; }
     var LOGO0 = 1.45, HAND = 1.28;
-    var t0 = performance.now(), HOLD = 0.6, FLY = 1.0;
+    var t0 = performance.now() - (SHORT ? LOGO0 * 1000 : 0), HOLD = 0.6, FLY = 1.0;
     var ease = function (t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
     (function step(now) {
       var t = (now - t0) / 1000, lt = t - LOGO0, arrived = 0;
@@ -233,11 +235,13 @@
         ctx.fillStyle = p.blue ? '#435BD8' : '#FFFFFF';
         ctx.beginPath(); ctx.arc(x, y, p.r * (1 - 0.5 * e), 0, Math.PI * 2); ctx.fill();
       }
-      var frac = arrived / parts.length;
+      var frac = SHORT ? 1 : arrived / parts.length;
       // 聚好的那顆點，等字母落完就跳進 logo，變成 i 上的點
       if (frac > 0 && lt < HAND) {
         ctx.globalAlpha = 1; ctx.fillStyle = '#FFFFFF';
-        ctx.beginPath(); ctx.arc(px, py, (DOTR - 4) + 4 * frac, 0, Math.PI * 2); ctx.fill();
+        var rr = (DOTR - 4) + 4 * frac;
+        if (SHORT) { var kp = Math.min(1, (lt + 0.02) / 0.32); rr = DOTR * (kp < 1 ? 1 + 2.70158 * Math.pow(kp - 1, 3) + 1.70158 * Math.pow(kp - 1, 2) : 1); }
+        ctx.beginPath(); ctx.arc(px, py, Math.max(0, rr), 0, Math.PI * 2); ctx.fill();
       }
       if (LG) LG.render(lt, P);
       // 最後從 i 的點滴下一顆小點，落到下面，成為往下畫線的起點
@@ -652,23 +656,27 @@
   } else {
     $$('video[preload="none"]').forEach(function (v) { v.setAttribute('preload', 'metadata'); });
   }
-  /* ---------- 5–8× 的點：第一次捲到才播一次 ---------- */
+  /* ---------- 5–8× 的點：捲到就播，整排離開畫面後重置，捲回來再播 ---------- */
   (function () {
     var d = $('[data-dots]');
     if (!d) return;
     if (reduce || !hasIO) { d.classList.add('d-done'); return; }
+    var token = 0, pending = false;
     var io = new IntersectionObserver(function (es) {
       es.forEach(function (e) {
-        if (!e.isIntersecting) return;
-        io.disconnect();
+        if (!e.isIntersecting) { token++; pending = false; d.classList.remove('d-go'); return; }
+        if (e.intersectionRatio < 1 || pending || d.classList.contains('d-go')) return;
         // 等整塊淡入完成再開始，第一顆點掉下來才看得到
-        var box = d.closest('.d-stat') || d, t0 = Date.now();
+        var my = ++token, box = d.closest('.d-stat') || d, t0 = Date.now();
+        pending = true;
         (function wait() {
-          if (parseFloat(getComputedStyle(box).opacity) >= 0.98 || Date.now() - t0 > 3000) setTimeout(function () { d.classList.add('d-go'); }, 250);
-          else requestAnimationFrame(wait);
+          if (my !== token) return;
+          if (parseFloat(getComputedStyle(box).opacity) >= 0.98 || Date.now() - t0 > 3000) {
+            setTimeout(function () { if (my === token) { pending = false; d.classList.add('d-go'); } }, 250);
+          } else requestAnimationFrame(wait);
         })();
       });
-    }, { threshold: 1 });
+    }, { threshold: [0, 1] });
     io.observe(d);
   })();
 })();
